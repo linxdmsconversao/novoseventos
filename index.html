@@ -4,23 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestão de Eventos</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .line-clamp-2 {
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+    </style>
 </head>
 <body>
     <div id="root"></div>
     
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const {
-            Plus, Users, DollarSign, FileText, Eye, EyeOff, Trash2, Edit2, 
-            Check, X, Calendar, MapPin, Clock, Star, MessageSquare, 
-            Key, UserPlus, LogIn, LogOut, Home, Settings, BarChart3,
-            Mail, Phone, CreditCard, Bed, Coffee, Car
-        } = lucide;
+
+        // Ícones simples usando Unicode
+        const Icons = {
+            Calendar: () => '📅',
+            Users: () => '👥',
+            DollarSign: () => '💰',
+            Star: () => '⭐',
+            MessageSquare: () => '💬',
+            Key: () => '🔑',
+            UserPlus: () => '👤',
+            LogOut: () => '🚪',
+            Home: () => '🏠',
+            Settings: () => '⚙️',
+            BarChart3: () => '📊',
+            MapPin: () => '📍',
+            Clock: () => '🕐',
+            Coffee: () => '☕',
+            Car: () => '🚗',
+            Bed: () => '🛏️',
+            CreditCard: () => '💳',
+            Plus: () => '➕'
+        };
 
         const SistemaEventos = () => {
             const [usuario, setUsuario] = useState(null);
@@ -42,8 +65,7 @@
             const [novoEvento, setNovoEvento] = useState({
                 nome: '', data: '', dataFim: '', descricao: '', 
                 local: '', endereco: '', capacidade: '',
-                valorAluguel: '', taxas: '', checkin: '', checkout: '',
-                comodidades: []
+                valorAluguel: '', taxas: '', checkin: '', checkout: ''
             });
             const [novoConvite, setNovoConvite] = useState({ nomeFamilia: '', email: '', telefone: '' });
             const [novoFeedback, setNovoFeedback] = useState({ 
@@ -53,19 +75,12 @@
                 descricao: '', valor: '', categoria: 'alimentacao', tipo: 'rateado'
             });
 
-            // Comodidades disponíveis
-            const comodidadesDisponiveis = [
-                'Wi-Fi', 'Piscina', 'Churrasqueira', 'Ar Condicionado', 'TV', 
-                'Cozinha Completa', 'Estacionamento', 'Área Gourmet', 'Jardim',
-                'Academia', 'Sauna', 'Jogos', 'Som Ambiente'
-            ];
-
             const categoriasGasto = [
-                { id: 'alimentacao', nome: 'Alimentação', icon: Coffee },
-                { id: 'transporte', nome: 'Transporte', icon: Car },
-                { id: 'hospedagem', nome: 'Hospedagem', icon: Bed },
-                { id: 'atividades', nome: 'Atividades', icon: Star },
-                { id: 'outros', nome: 'Outros', icon: CreditCard }
+                { id: 'alimentacao', nome: 'Alimentação' },
+                { id: 'transporte', nome: 'Transporte' },
+                { id: 'hospedagem', nome: 'Hospedagem' },
+                { id: 'atividades', nome: 'Atividades' },
+                { id: 'outros', nome: 'Outros' }
             ];
 
             // Carregar dados do localStorage
@@ -238,11 +253,11 @@
                 };
                 
                 setEventos([...eventos, evento]);
+                setActiveTab('eventos');
                 setNovoEvento({
                     nome: '', data: '', dataFim: '', descricao: '', 
                     local: '', endereco: '', capacidade: '',
-                    valorAluguel: '', taxas: '', checkin: '', checkout: '',
-                    comodidades: []
+                    valorAluguel: '', taxas: '', checkin: '', checkout: ''
                 });
             };
 
@@ -280,177 +295,352 @@
                 alert('Feedback enviado com sucesso!');
             };
 
-            // Cálculos
-            const calcularEstatisticas = () => {
-                if (!eventoAtual) return {};
-
-                const gastosEvento = gastos.filter(g => g.eventoId === eventoAtual.id);
-                const familiasEvento = familias.filter(f => eventoAtual.familias?.includes(f.id));
-                const totalGastos = gastosEvento.reduce((acc, g) => acc + g.valor, 0);
-                const feedbacksEvento = feedbacks.filter(f => f.eventoId === eventoAtual.id);
-                const mediaAvaliacao = feedbacksEvento.length > 0 
-                    ? feedbacksEvento.reduce((acc, f) => acc + f.avaliacao, 0) / feedbacksEvento.length 
-                    : 0;
-
-                return {
-                    totalGastos,
-                    totalFamilias: familiasEvento.length,
-                    totalPessoas: familiasEvento.reduce((acc, f) => acc + (f.membros?.length || 0) + 1, 0),
-                    mediaAvaliacao,
-                    totalFeedbacks: feedbacksEvento.length
-                };
-            };
-
             const minhaFamilia = familias.find(f => f.id === usuario?.familiaId);
             const meusGastos = gastos.filter(g => g.familiaId === usuario?.familiaId);
-            const stats = calcularEstatisticas();
 
             // Tela de Login
             if (tela === 'login') {
-                return React.createElement('div', { className: "min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4" },
-                    React.createElement('div', { className: "bg-white rounded-xl shadow-2xl p-8 w-full max-w-md" },
-                        React.createElement('div', { className: "text-center mb-8" },
-                            React.createElement('div', { className: "bg-blue-100 rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-4" },
-                                React.createElement(Calendar, { className: "text-blue-600", size: 32 })
-                            ),
-                            React.createElement('h1', { className: "text-2xl font-bold text-gray-800" }, 'Sistema de Eventos'),
-                            React.createElement('p', { className: "text-gray-600" }, 'Faça login para acessar')
-                        ),
-                        React.createElement('div', { className: "space-y-4" },
-                            React.createElement('input', {
-                                type: "email",
-                                placeholder: "Email",
-                                value: formLogin.email,
-                                onChange: (e) => setFormLogin({ ...formLogin, email: e.target.value }),
-                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            }),
-                            React.createElement('input', {
-                                type: "password",
-                                placeholder: "Senha",
-                                value: formLogin.senha,
-                                onChange: (e) => setFormLogin({ ...formLogin, senha: e.target.value }),
-                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500",
-                                onKeyPress: (e) => e.key === 'Enter' && fazerLogin()
-                            }),
-                            React.createElement('button', {
-                                onClick: fazerLogin,
-                                className: "w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold"
-                            }, 'Entrar')
-                        ),
-                        React.createElement('div', { className: "mt-6 text-center" },
-                            React.createElement('button', {
-                                onClick: () => setTela('cadastro'),
-                                className: "text-blue-500 hover:text-blue-700 font-semibold"
-                            }, 'Não tem conta? Cadastre-se com convite')
-                        ),
-                        React.createElement('div', { className: "mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600" },
-                            React.createElement('strong', null, 'Acesso Admin:'),
-                            React.createElement('br'),
-                            'Email: admin@eventos.com',
-                            React.createElement('br'),
-                            'Senha: admin123'
-                        )
-                    )
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+                            <div className="text-center mb-8">
+                                <div className="text-6xl mb-4">{Icons.Calendar()}</div>
+                                <h1 className="text-2xl font-bold text-gray-800">Sistema de Eventos</h1>
+                                <p className="text-gray-600">Faça login para acessar</p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <input
+                                    type="email"
+                                    placeholder="Email"
+                                    value={formLogin.email}
+                                    onChange={(e) => setFormLogin({ ...formLogin, email: e.target.value })}
+                                    className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <input
+                                    type="password"
+                                    placeholder="Senha"
+                                    value={formLogin.senha}
+                                    onChange={(e) => setFormLogin({ ...formLogin, senha: e.target.value })}
+                                    className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    onKeyPress={(e) => e.key === 'Enter' && fazerLogin()}
+                                />
+                                <button
+                                    onClick={fazerLogin}
+                                    className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold"
+                                >
+                                    Entrar
+                                </button>
+                            </div>
+
+                            <div className="mt-6 text-center">
+                                <button
+                                    onClick={() => setTela('cadastro')}
+                                    className="text-blue-500 hover:text-blue-700 font-semibold"
+                                >
+                                    Não tem conta? Cadastre-se com convite
+                                </button>
+                            </div>
+
+                            <div className="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
+                                <strong>Acesso Admin:</strong><br />
+                                Email: admin@eventos.com<br />
+                                Senha: admin123
+                            </div>
+                        </div>
+                    </div>
                 );
             }
 
             // Tela de Cadastro
             if (tela === 'cadastro') {
-                return React.createElement('div', { className: "min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4" },
-                    React.createElement('div', { className: "bg-white rounded-xl shadow-2xl p-8 w-full max-w-md" },
-                        React.createElement('div', { className: "text-center mb-8" },
-                            React.createElement('div', { className: "bg-green-100 rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-4" },
-                                React.createElement(UserPlus, { className: "text-green-600", size: 32 })
-                            ),
-                            React.createElement('h1', { className: "text-2xl font-bold text-gray-800" }, 'Criar Conta'),
-                            React.createElement('p', { className: "text-gray-600" }, 'Use seu código de convite')
-                        ),
-                        React.createElement('div', { className: "space-y-4" },
-                            React.createElement('input', {
-                                type: "text",
-                                placeholder: "Código do Convite",
-                                value: formCadastro.codigoConvite,
-                                onChange: (e) => setFormCadastro({ ...formCadastro, codigoConvite: e.target.value.toUpperCase() }),
-                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            }),
-                            React.createElement('input', {
-                                type: "text",
-                                placeholder: "Nome Completo",
-                                value: formCadastro.nome,
-                                onChange: (e) => setFormCadastro({ ...formCadastro, nome: e.target.value }),
-                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            }),
-                            React.createElement('input', {
-                                type: "email",
-                                placeholder: "Email",
-                                value: formCadastro.email,
-                                onChange: (e) => setFormCadastro({ ...formCadastro, email: e.target.value }),
-                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            }),
-                            React.createElement('input', {
-                                type: "tel",
-                                placeholder: "Telefone",
-                                value: formCadastro.telefone,
-                                onChange: (e) => setFormCadastro({ ...formCadastro, telefone: e.target.value }),
-                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            }),
-                            React.createElement('input', {
-                                type: "password",
-                                placeholder: "Senha",
-                                value: formCadastro.senha,
-                                onChange: (e) => setFormCadastro({ ...formCadastro, senha: e.target.value }),
-                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            }),
-                            React.createElement('input', {
-                                type: "password",
-                                placeholder: "Confirmar Senha",
-                                value: formCadastro.confirmarSenha,
-                                onChange: (e) => setFormCadastro({ ...formCadastro, confirmarSenha: e.target.value }),
-                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            }),
-                            React.createElement('button', {
-                                onClick: criarConta,
-                                className: "w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 font-semibold"
-                            }, 'Criar Conta')
-                        ),
-                        React.createElement('div', { className: "mt-6 text-center" },
-                            React.createElement('button', {
-                                onClick: () => setTela('login'),
-                                className: "text-blue-500 hover:text-blue-700 font-semibold"
-                            }, 'Já tem conta? Fazer login')
-                        )
-                    )
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+                            <div className="text-center mb-8">
+                                <div className="text-6xl mb-4">{Icons.UserPlus()}</div>
+                                <h1 className="text-2xl font-bold text-gray-800">Criar Conta</h1>
+                                <p className="text-gray-600">Use seu código de convite</p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <input
+                                    type="text"
+                                    placeholder="Código do Convite"
+                                    value={formCadastro.codigoConvite}
+                                    onChange={(e) => setFormCadastro({ ...formCadastro, codigoConvite: e.target.value.toUpperCase() })}
+                                    className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Nome Completo"
+                                    value={formCadastro.nome}
+                                    onChange={(e) => setFormCadastro({ ...formCadastro, nome: e.target.value })}
+                                    className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                />
+                                <input
+                                    type="email"
+                                    placeholder="Email"
+                                    value={formCadastro.email}
+                                    onChange={(e) => setFormCadastro({ ...formCadastro, email: e.target.value })}
+                                    className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                />
+                                <input
+                                    type="tel"
+                                    placeholder="Telefone"
+                                    value={formCadastro.telefone}
+                                    onChange={(e) => setFormCadastro({ ...formCadastro, telefone: e.target.value })}
+                                    className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                />
+                                <input
+                                    type="password"
+                                    placeholder="Senha"
+                                    value={formCadastro.senha}
+                                    onChange={(e) => setFormCadastro({ ...formCadastro, senha: e.target.value })}
+                                    className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                />
+                                <input
+                                    type="password"
+                                    placeholder="Confirmar Senha"
+                                    value={formCadastro.confirmarSenha}
+                                    onChange={(e) => setFormCadastro({ ...formCadastro, confirmarSenha: e.target.value })}
+                                    className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                />
+                                <button
+                                    onClick={criarConta}
+                                    className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 font-semibold"
+                                >
+                                    Criar Conta
+                                </button>
+                            </div>
+
+                            <div className="mt-6 text-center">
+                                <button
+                                    onClick={() => setTela('login')}
+                                    className="text-blue-500 hover:text-blue-700 font-semibold"
+                                >
+                                    Já tem conta? Fazer login
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 );
             }
 
-            // Dashboard - versão simplificada para o exemplo
-            return React.createElement('div', { className: "min-h-screen bg-gray-50 p-4" },
-                React.createElement('div', { className: "max-w-4xl mx-auto" },
-                    React.createElement('div', { className: "bg-white rounded-lg shadow p-6 mb-6" },
-                        React.createElement('div', { className: "flex justify-between items-center" },
-                            React.createElement('h1', { className: "text-2xl font-bold" }, 'Sistema de Eventos'),
-                            React.createElement('button', {
-                                onClick: logout,
-                                className: "text-red-500 hover:text-red-700"
-                            }, 'Sair')
-                        ),
-                        React.createElement('p', { className: "text-gray-600 mt-2" }, 
-                            `Bem-vindo, ${usuario.nome}! ${isAdmin ? '(Administrador)' : ''}`
-                        )
-                    ),
-                    React.createElement('div', { className: "text-center py-12" },
-                        React.createElement('h2', { className: "text-xl mb-4" }, 'Sistema funcionando perfeitamente! 🎉'),
-                        React.createElement('p', { className: "text-gray-600" }, 
-                            isAdmin 
-                                ? 'Como admin, você pode criar eventos e gerar convites.' 
-                                : 'Como participante, você pode adicionar gastos e dar feedback.'
-                        )
-                    )
-                )
-            );
-        };
+            // Dashboard Principal
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    {/* Header */}
+                    <header className="bg-white shadow-sm border-b">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="flex justify-between items-center py-4">
+                                <div className="flex items-center space-x-4">
+                                    <span className="text-2xl">{Icons.Calendar()}</span>
+                                    <div>
+                                        <h1 className="text-xl font-bold text-gray-900">Sistema de Eventos</h1>
+                                        {eventoAtual && (
+                                            <p className="text-sm text-gray-500">{eventoAtual.nome}</p>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center space-x-4">
+                                    <div className="text-right">
+                                        <p className="text-sm font-medium text-gray-900">{usuario.nome}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {isAdmin ? 'Administrador' : 'Participante'}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={logout}
+                                        className="text-gray-400 hover:text-gray-600 text-xl"
+                                    >
+                                        {Icons.LogOut()}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
 
-        ReactDOM.render(React.createElement(SistemaEventos), document.getElementById('root'));
-    </script>
-</body>
-</html>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                        {!eventoAtual ? (
+                            // Lista de Eventos
+                            <div>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-2xl font-bold text-gray-900">
+                                        {isAdmin ? 'Gerenciar Eventos' : 'Meus Eventos'}
+                                    </h2>
+                                    {isAdmin && (
+                                        <div className="flex space-x-4">
+                                            <button
+                                                onClick={() => setActiveTab('convites')}
+                                                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                                            >
+                                                {Icons.Key()} Gerar Convites
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveTab('novo-evento')}
+                                                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                                            >
+                                                {Icons.Plus()} Novo Evento
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Gerar Convites */}
+                                {isAdmin && activeTab === 'convites' && (
+                                    <div className="bg-white rounded-lg shadow p-6 mb-6">
+                                        <h3 className="text-lg font-semibold mb-4">Gerar Convites</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                            <input
+                                                type="text"
+                                                placeholder="Nome da Família"
+                                                value={novoConvite.nomeFamilia}
+                                                onChange={(e) => setNovoConvite({ ...novoConvite, nomeFamilia: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                            <input
+                                                type="email"
+                                                placeholder="Email"
+                                                value={novoConvite.email}
+                                                onChange={(e) => setNovoConvite({ ...novoConvite, email: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                            <input
+                                                type="tel"
+                                                placeholder="Telefone (opcional)"
+                                                value={novoConvite.telefone}
+                                                onChange={(e) => setNovoConvite({ ...novoConvite, telefone: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={gerarConvite}
+                                            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                                        >
+                                            Gerar Convite
+                                        </button>
+
+                                        {/* Lista de Convites */}
+                                        <div className="mt-6">
+                                            <h4 className="font-semibold mb-2">Convites Gerados</h4>
+                                            <div className="space-y-2">
+                                                {convites.map(convite => (
+                                                    <div key={convite.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                                        <div>
+                                                            <span className="font-medium">{convite.nomeFamilia}</span>
+                                                            <span className="text-sm text-gray-500 ml-2">({convite.email})</span>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className={`px-2 py-1 rounded text-xs ${
+                                                                convite.usado ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                                            }`}>
+                                                                {convite.usado ? 'Usado' : convite.codigo}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Criar Evento */}
+                                {isAdmin && activeTab === 'novo-evento' && (
+                                    <div className="bg-white rounded-lg shadow p-6 mb-6">
+                                        <h3 className="text-lg font-semibold mb-4">Criar Novo Evento</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <input
+                                                type="text"
+                                                placeholder="Nome do Evento"
+                                                value={novoEvento.nome}
+                                                onChange={(e) => setNovoEvento({ ...novoEvento, nome: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                            <input
+                                                type="date"
+                                                placeholder="Data de Início"
+                                                value={novoEvento.data}
+                                                onChange={(e) => setNovoEvento({ ...novoEvento, data: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                            <input
+                                                type="date"
+                                                placeholder="Data de Fim"
+                                                value={novoEvento.dataFim}
+                                                onChange={(e) => setNovoEvento({ ...novoEvento, dataFim: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Local"
+                                                value={novoEvento.local}
+                                                onChange={(e) => setNovoEvento({ ...novoEvento, local: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Endereço Completo"
+                                                value={novoEvento.endereco}
+                                                onChange={(e) => setNovoEvento({ ...novoEvento, endereco: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Capacidade (pessoas)"
+                                                value={novoEvento.capacidade}
+                                                onChange={(e) => setNovoEvento({ ...novoEvento, capacidade: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Valor do Aluguel (R$)"
+                                                value={novoEvento.valorAluguel}
+                                                onChange={(e) => setNovoEvento({ ...novoEvento, valorAluguel: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Taxas Extras (R$)"
+                                                value={novoEvento.taxas}
+                                                onChange={(e) => setNovoEvento({ ...novoEvento, taxas: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                            <input
+                                                type="datetime-local"
+                                                placeholder="Check-in"
+                                                value={novoEvento.checkin}
+                                                onChange={(e) => setNovoEvento({ ...novoEvento, checkin: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                            <input
+                                                type="datetime-local"
+                                                placeholder="Check-out"
+                                                value={novoEvento.checkout}
+                                                onChange={(e) => setNovoEvento({ ...novoEvento, checkout: e.target.value })}
+                                                className="border rounded-lg px-3 py-2"
+                                            />
+                                        </div>
+                                        
+                                        <textarea
+                                            placeholder="Descrição do Evento"
+                                            value={novoEvento.descricao}
+                                            onChange={(e) => setNovoEvento({ ...novoEvento, descricao: e.target.value })}
+                                            className="w-full border rounded-lg px-3 py-2 mb-4"
+                                            rows={3}
+                                        />
+
+                                        <button
+                                            onClick={criarEvento}
+                                            className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
+                                        >
+                                            Criar Evento
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Lista de Eventos */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols
