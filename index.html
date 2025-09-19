@@ -8,42 +8,12 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .line-clamp-2 {
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-        }
-    </style>
 </head>
 <body>
     <div id="root"></div>
     
     <script type="text/babel">
         const { useState, useEffect } = React;
-
-        // Ícones simples usando Unicode
-        const Icons = {
-            Calendar: () => '📅',
-            Users: () => '👥',
-            DollarSign: () => '💰',
-            Star: () => '⭐',
-            MessageSquare: () => '💬',
-            Key: () => '🔑',
-            UserPlus: () => '👤',
-            LogOut: () => '🚪',
-            Home: () => '🏠',
-            Settings: () => '⚙️',
-            BarChart3: () => '📊',
-            MapPin: () => '📍',
-            Clock: () => '🕐',
-            Coffee: () => '☕',
-            Car: () => '🚗',
-            Bed: () => '🛏️',
-            CreditCard: () => '💳',
-            Plus: () => '➕'
-        };
 
         const SistemaEventos = () => {
             const [usuario, setUsuario] = useState(null);
@@ -55,7 +25,7 @@
             const [gastos, setGastos] = useState([]);
             const [convites, setConvites] = useState([]);
             const [feedbacks, setFeedbacks] = useState([]);
-            const [activeTab, setActiveTab] = useState('evento');
+            const [activeTab, setActiveTab] = useState('eventos');
 
             // Estados para formulários
             const [formLogin, setFormLogin] = useState({ email: '', senha: '' });
@@ -64,26 +34,17 @@
             });
             const [novoEvento, setNovoEvento] = useState({
                 nome: '', data: '', dataFim: '', descricao: '', 
-                local: '', endereco: '', capacidade: '',
-                valorAluguel: '', taxas: '', checkin: '', checkout: ''
+                local: '', endereco: '', valorAluguel: '', checkin: '', checkout: ''
             });
             const [novoConvite, setNovoConvite] = useState({ nomeFamilia: '', email: '', telefone: '' });
-            const [novoFeedback, setNovoFeedback] = useState({ 
-                avaliacao: 5, comentario: '', melhorias: '', recomendacoes: ''
-            });
             const [novoGasto, setNovoGasto] = useState({ 
                 descricao: '', valor: '', categoria: 'alimentacao', tipo: 'rateado'
             });
+            const [novoFeedback, setNovoFeedback] = useState({ 
+                avaliacao: 5, comentario: '', melhorias: ''
+            });
 
-            const categoriasGasto = [
-                { id: 'alimentacao', nome: 'Alimentação' },
-                { id: 'transporte', nome: 'Transporte' },
-                { id: 'hospedagem', nome: 'Hospedagem' },
-                { id: 'atividades', nome: 'Atividades' },
-                { id: 'outros', nome: 'Outros' }
-            ];
-
-            // Carregar dados do localStorage
+            // Carregar dados
             useEffect(() => {
                 const usuarioStorage = localStorage.getItem('usuario');
                 const eventosStorage = localStorage.getItem('eventos');
@@ -104,7 +65,7 @@
                 if (convitesStorage) setConvites(JSON.parse(convitesStorage));
                 if (feedbacksStorage) setFeedbacks(JSON.parse(feedbacksStorage));
 
-                // Criar admin padrão se não existir
+                // Criar admin padrão
                 const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
                 if (usuarios.length === 0) {
                     const admin = {
@@ -112,35 +73,30 @@
                         nome: 'Administrador',
                         email: 'admin@eventos.com',
                         senha: 'admin123',
-                        isAdmin: true,
-                        criadoEm: new Date().toISOString()
+                        isAdmin: true
                     };
                     localStorage.setItem('usuarios', JSON.stringify([admin]));
                 }
             }, []);
 
-            // Salvar dados no localStorage
+            // Salvar dados
             useEffect(() => {
                 if (eventos.length > 0) localStorage.setItem('eventos', JSON.stringify(eventos));
             }, [eventos]);
-
             useEffect(() => {
                 if (familias.length > 0) localStorage.setItem('familias', JSON.stringify(familias));
             }, [familias]);
-
             useEffect(() => {
                 if (gastos.length > 0) localStorage.setItem('gastos', JSON.stringify(gastos));
             }, [gastos]);
-
             useEffect(() => {
                 if (convites.length > 0) localStorage.setItem('convites', JSON.stringify(convites));
             }, [convites]);
-
             useEffect(() => {
                 if (feedbacks.length > 0) localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
             }, [feedbacks]);
 
-            // Funções de autenticação
+            // Funções
             const fazerLogin = () => {
                 const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
                 const user = usuarios.find(u => u.email === formLogin.email && u.senha === formLogin.senha);
@@ -169,11 +125,6 @@
                 }
 
                 const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
-                if (usuarios.find(u => u.email === formCadastro.email)) {
-                    alert('Email já cadastrado!');
-                    return;
-                }
-
                 const novoUsuario = {
                     id: Date.now().toString(),
                     nome: formCadastro.nome,
@@ -181,37 +132,29 @@
                     telefone: formCadastro.telefone,
                     senha: formCadastro.senha,
                     isAdmin: false,
-                    familiaId: convite.id,
-                    criadoEm: new Date().toISOString()
+                    familiaId: convite.id
                 };
 
                 usuarios.push(novoUsuario);
                 localStorage.setItem('usuarios', JSON.stringify(usuarios));
 
-                // Marcar convite como usado
                 const convitesAtualizados = convites.map(c => 
-                    c.id === convite.id ? { ...c, usado: true, usuarioId: novoUsuario.id } : c
+                    c.id === convite.id ? { ...c, usado: true } : c
                 );
                 setConvites(convitesAtualizados);
 
-                // Criar família automaticamente
                 const novaFamilia = {
                     id: convite.id,
                     nome: convite.nomeFamilia,
                     responsavel: formCadastro.nome,
                     email: formCadastro.email,
-                    telefone: formCadastro.telefone,
-                    membros: [],
-                    presente: false
+                    membros: []
                 };
                 setFamilias([...familias, novaFamilia]);
 
                 setUsuario(novoUsuario);
                 localStorage.setItem('usuario', JSON.stringify(novoUsuario));
                 setTela('dashboard');
-                setFormCadastro({ 
-                    codigoConvite: '', nome: '', email: '', telefone: '', senha: '', confirmarSenha: ''
-                });
             };
 
             const logout = () => {
@@ -222,7 +165,6 @@
                 setEventoAtual(null);
             };
 
-            // Funções administrativas
             const gerarConvite = () => {
                 if (!novoConvite.nomeFamilia || !novoConvite.email) return;
 
@@ -232,8 +174,7 @@
                     nomeFamilia: novoConvite.nomeFamilia,
                     email: novoConvite.email,
                     telefone: novoConvite.telefone,
-                    usado: false,
-                    criadoEm: new Date().toISOString()
+                    usado: false
                 };
 
                 setConvites([...convites, convite]);
@@ -247,8 +188,6 @@
                 const evento = {
                     id: Date.now(),
                     ...novoEvento,
-                    familias: [],
-                    gastos: [],
                     criado: new Date().toISOString()
                 };
                 
@@ -256,8 +195,7 @@
                 setActiveTab('eventos');
                 setNovoEvento({
                     nome: '', data: '', dataFim: '', descricao: '', 
-                    local: '', endereco: '', capacidade: '',
-                    valorAluguel: '', taxas: '', checkin: '', checkout: ''
+                    local: '', endereco: '', valorAluguel: '', checkin: '', checkout: ''
                 });
             };
 
@@ -279,8 +217,6 @@
             };
 
             const enviarFeedback = () => {
-                if (!novoFeedback.comentario) return;
-
                 const feedback = {
                     id: Date.now(),
                     eventoId: eventoAtual.id,
@@ -291,11 +227,10 @@
                 };
 
                 setFeedbacks([...feedbacks, feedback]);
-                setNovoFeedback({ avaliacao: 5, comentario: '', melhorias: '', recomendacoes: '' });
-                alert('Feedback enviado com sucesso!');
+                setNovoFeedback({ avaliacao: 5, comentario: '', melhorias: '' });
+                alert('Feedback enviado!');
             };
 
-            const minhaFamilia = familias.find(f => f.id === usuario?.familiaId);
             const meusGastos = gastos.filter(g => g.familiaId === usuario?.familiaId);
 
             // Tela de Login
@@ -304,7 +239,7 @@
                     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
                         <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
                             <div className="text-center mb-8">
-                                <div className="text-6xl mb-4">{Icons.Calendar()}</div>
+                                <div className="text-6xl mb-4">📅</div>
                                 <h1 className="text-2xl font-bold text-gray-800">Sistema de Eventos</h1>
                                 <p className="text-gray-600">Faça login para acessar</p>
                             </div>
@@ -338,14 +273,12 @@
                                     onClick={() => setTela('cadastro')}
                                     className="text-blue-500 hover:text-blue-700 font-semibold"
                                 >
-                                    Não tem conta? Cadastre-se com convite
+                                    Cadastrar com convite
                                 </button>
                             </div>
 
                             <div className="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
-                                <strong>Acesso Admin:</strong><br />
-                                Email: admin@eventos.com<br />
-                                Senha: admin123
+                                <strong>Admin:</strong> admin@eventos.com / admin123
                             </div>
                         </div>
                     </div>
@@ -358,7 +291,7 @@
                     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
                         <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
                             <div className="text-center mb-8">
-                                <div className="text-6xl mb-4">{Icons.UserPlus()}</div>
+                                <div className="text-6xl mb-4">👤</div>
                                 <h1 className="text-2xl font-bold text-gray-800">Criar Conta</h1>
                                 <p className="text-gray-600">Use seu código de convite</p>
                             </div>
@@ -419,7 +352,7 @@
                                     onClick={() => setTela('login')}
                                     className="text-blue-500 hover:text-blue-700 font-semibold"
                                 >
-                                    Já tem conta? Fazer login
+                                    Voltar ao login
                                 </button>
                             </div>
                         </div>
@@ -427,62 +360,50 @@
                 );
             }
 
-            // Dashboard Principal
+            // Dashboard
             return (
                 <div className="min-h-screen bg-gray-50">
-                    {/* Header */}
                     <header className="bg-white shadow-sm border-b">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="flex justify-between items-center py-4">
+                        <div className="max-w-7xl mx-auto px-4 py-4">
+                            <div className="flex justify-between items-center">
                                 <div className="flex items-center space-x-4">
-                                    <span className="text-2xl">{Icons.Calendar()}</span>
+                                    <span className="text-2xl">📅</span>
                                     <div>
-                                        <h1 className="text-xl font-bold text-gray-900">Sistema de Eventos</h1>
-                                        {eventoAtual && (
-                                            <p className="text-sm text-gray-500">{eventoAtual.nome}</p>
-                                        )}
+                                        <h1 className="text-xl font-bold">Sistema de Eventos</h1>
+                                        {eventoAtual && <p className="text-sm text-gray-500">{eventoAtual.nome}</p>}
                                     </div>
                                 </div>
-                                
                                 <div className="flex items-center space-x-4">
                                     <div className="text-right">
-                                        <p className="text-sm font-medium text-gray-900">{usuario.nome}</p>
-                                        <p className="text-xs text-gray-500">
-                                            {isAdmin ? 'Administrador' : 'Participante'}
-                                        </p>
+                                        <p className="text-sm font-medium">{usuario.nome}</p>
+                                        <p className="text-xs text-gray-500">{isAdmin ? 'Admin' : 'Participante'}</p>
                                     </div>
-                                    <button
-                                        onClick={logout}
-                                        className="text-gray-400 hover:text-gray-600 text-xl"
-                                    >
-                                        {Icons.LogOut()}
+                                    <button onClick={logout} className="text-red-500 hover:text-red-700">
+                                        🚪 Sair
                                     </button>
                                 </div>
                             </div>
                         </div>
                     </header>
 
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <div className="max-w-7xl mx-auto px-4 py-6">
                         {!eventoAtual ? (
-                            // Lista de Eventos
                             <div>
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-2xl font-bold text-gray-900">
-                                        {isAdmin ? 'Gerenciar Eventos' : 'Meus Eventos'}
-                                    </h2>
+                                    <h2 className="text-2xl font-bold">{isAdmin ? 'Gerenciar Eventos' : 'Meus Eventos'}</h2>
                                     {isAdmin && (
                                         <div className="flex space-x-4">
                                             <button
                                                 onClick={() => setActiveTab('convites')}
                                                 className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
                                             >
-                                                {Icons.Key()} Gerar Convites
+                                                🔑 Convites
                                             </button>
                                             <button
                                                 onClick={() => setActiveTab('novo-evento')}
                                                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
                                             >
-                                                {Icons.Plus()} Novo Evento
+                                                ➕ Novo Evento
                                             </button>
                                         </div>
                                     )}
@@ -509,7 +430,7 @@
                                             />
                                             <input
                                                 type="tel"
-                                                placeholder="Telefone (opcional)"
+                                                placeholder="Telefone"
                                                 value={novoConvite.telefone}
                                                 onChange={(e) => setNovoConvite({ ...novoConvite, telefone: e.target.value })}
                                                 className="border rounded-lg px-3 py-2"
@@ -522,26 +443,21 @@
                                             Gerar Convite
                                         </button>
 
-                                        {/* Lista de Convites */}
                                         <div className="mt-6">
                                             <h4 className="font-semibold mb-2">Convites Gerados</h4>
-                                            <div className="space-y-2">
-                                                {convites.map(convite => (
-                                                    <div key={convite.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                                                        <div>
-                                                            <span className="font-medium">{convite.nomeFamilia}</span>
-                                                            <span className="text-sm text-gray-500 ml-2">({convite.email})</span>
-                                                        </div>
-                                                        <div className="flex items-center space-x-2">
-                                                            <span className={`px-2 py-1 rounded text-xs ${
-                                                                convite.usado ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                                            }`}>
-                                                                {convite.usado ? 'Usado' : convite.codigo}
-                                                            </span>
-                                                        </div>
+                                            {convites.map(convite => (
+                                                <div key={convite.id} className="flex justify-between items-center p-3 bg-gray-50 rounded mb-2">
+                                                    <div>
+                                                        <span className="font-medium">{convite.nomeFamilia}</span>
+                                                        <span className="text-sm text-gray-500 ml-2">({convite.email})</span>
                                                     </div>
-                                                ))}
-                                            </div>
+                                                    <span className={`px-2 py-1 rounded text-xs ${
+                                                        convite.usado ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                                    }`}>
+                                                        {convite.usado ? '✓ Usado' : convite.codigo}
+                                                    </span>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
@@ -560,14 +476,13 @@
                                             />
                                             <input
                                                 type="date"
-                                                placeholder="Data de Início"
                                                 value={novoEvento.data}
                                                 onChange={(e) => setNovoEvento({ ...novoEvento, data: e.target.value })}
                                                 className="border rounded-lg px-3 py-2"
                                             />
                                             <input
                                                 type="date"
-                                                placeholder="Data de Fim"
+                                                placeholder="Data Fim"
                                                 value={novoEvento.dataFim}
                                                 onChange={(e) => setNovoEvento({ ...novoEvento, dataFim: e.target.value })}
                                                 className="border rounded-lg px-3 py-2"
@@ -580,33 +495,11 @@
                                                 className="border rounded-lg px-3 py-2"
                                             />
                                             <input
-                                                type="text"
-                                                placeholder="Endereço Completo"
-                                                value={novoEvento.endereco}
-                                                onChange={(e) => setNovoEvento({ ...novoEvento, endereco: e.target.value })}
-                                                className="border rounded-lg px-3 py-2"
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Capacidade (pessoas)"
-                                                value={novoEvento.capacidade}
-                                                onChange={(e) => setNovoEvento({ ...novoEvento, capacidade: e.target.value })}
-                                                className="border rounded-lg px-3 py-2"
-                                            />
-                                            <input
                                                 type="number"
                                                 step="0.01"
-                                                placeholder="Valor do Aluguel (R$)"
+                                                placeholder="Valor Aluguel (R$)"
                                                 value={novoEvento.valorAluguel}
                                                 onChange={(e) => setNovoEvento({ ...novoEvento, valorAluguel: e.target.value })}
-                                                className="border rounded-lg px-3 py-2"
-                                            />
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                placeholder="Taxas Extras (R$)"
-                                                value={novoEvento.taxas}
-                                                onChange={(e) => setNovoEvento({ ...novoEvento, taxas: e.target.value })}
                                                 className="border rounded-lg px-3 py-2"
                                             />
                                             <input
@@ -616,23 +509,14 @@
                                                 onChange={(e) => setNovoEvento({ ...novoEvento, checkin: e.target.value })}
                                                 className="border rounded-lg px-3 py-2"
                                             />
-                                            <input
-                                                type="datetime-local"
-                                                placeholder="Check-out"
-                                                value={novoEvento.checkout}
-                                                onChange={(e) => setNovoEvento({ ...novoEvento, checkout: e.target.value })}
-                                                className="border rounded-lg px-3 py-2"
-                                            />
                                         </div>
-                                        
                                         <textarea
-                                            placeholder="Descrição do Evento"
+                                            placeholder="Descrição"
                                             value={novoEvento.descricao}
                                             onChange={(e) => setNovoEvento({ ...novoEvento, descricao: e.target.value })}
                                             className="w-full border rounded-lg px-3 py-2 mb-4"
                                             rows={3}
                                         />
-
                                         <button
                                             onClick={criarEvento}
                                             className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
@@ -643,4 +527,254 @@
                                 )}
 
                                 {/* Lista de Eventos */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {eventos.map(evento => (
+                                        <div
+                                            key={evento.id}
+                                            className="bg-white rounded-lg shadow hover:shadow-md cursor-pointer p-6 transition-shadow"
+                                            onClick={() => setEventoAtual(evento)}
+                                        >
+                                            <h3 className="text-xl font-semibold mb-2">{evento.nome}</h3>
+                                            <p className="text-gray-600 mb-2">📅 {new Date(evento.data).toLocaleDateString('pt-BR')}</p>
+                                            {evento.local && <p className="text-gray-600 mb-2">📍 {evento.local}</p>}
+                                            {evento.valorAluguel && (
+                                                <p className="text-green-600 font-semibold">💰 R$ {parseFloat(evento.valorAluguel).toFixed(2)}</p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                <div className="bg-white rounded-lg shadow p-6 mb-6">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h2 className="text-2xl font-bold">{eventoAtual.nome}</h2>
+                                            <p className="text-gray-600">📅 {new Date(eventoAtual.data).toLocaleDateString('pt-BR')}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => setEventoAtual(null)}
+                                            className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                                        >
+                                            ← Voltar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Tabs */}
+                                <div className="bg-white rounded-lg shadow">
+                                    <div className="flex border-b">
+                                        <button
+                                            onClick={() => setActiveTab('gastos')}
+                                            className={`px-6 py-3 font-medium ${activeTab === 'gastos' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+                                        >
+                                            💰 Meus Gastos
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('relatorio')}
+                                            className={`px-6 py-3 font-medium ${activeTab === 'relatorio' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+                                        >
+                                            📊 Relatórios
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('feedback')}
+                                            className={`px-6 py-3 font-medium ${activeTab === 'feedback' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+                                        >
+                                            💬 Feedback
+                                        </button>
+                                    </div>
+
+                                    <div className="p-6">
+                                        {activeTab === 'gastos' && (
+                                            <div>
+                                                <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                                                    <h3 className="font-semibold mb-4">Adicionar Gasto</h3>
+                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Descrição"
+                                                            value={novoGasto.descricao}
+                                                            onChange={(e) => setNovoGasto({ ...novoGasto, descricao: e.target.value })}
+                                                            className="border rounded-lg px-3 py-2"
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            placeholder="Valor (R$)"
+                                                            value={novoGasto.valor}
+                                                            onChange={(e) => setNovoGasto({ ...novoGasto, valor: e.target.value })}
+                                                            className="border rounded-lg px-3 py-2"
+                                                        />
+                                                        <select
+                                                            value={novoGasto.categoria}
+                                                            onChange={(e) => setNovoGasto({ ...novoGasto, categoria: e.target.value })}
+                                                            className="border rounded-lg px-3 py-2"
+                                                        >
+                                                            <option value="alimentacao">Alimentação</option>
+                                                            <option value="transporte">Transporte</option>
+                                                            <option value="hospedagem">Hospedagem</option>
+                                                            <option value="atividades">Atividades</option>
+                                                            <option value="outros">Outros</option>
+                                                        </select>
+                                                        <select
+                                                            value={novoGasto.tipo}
+                                                            onChange={(e) => setNovoGasto({ ...novoGasto, tipo: e.target.value })}
+                                                            className="border rounded-lg px-3 py-2"
+                                                        >
+                                                            <option value="rateado">Rateado</option>
+                                                            <option value="individual">Individual</option>
+                                                        </select>
+                                                    </div>
+                                                    <button
+                                                        onClick={adicionarGasto}
+                                                        className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                                                    >
+                                                        Adicionar Gasto
+                                                    </button>
+                                                </div>
+
+                                                <div>
+                                                    <h3 className="font-semibold mb-4">Meus Gastos</h3>
+                                                    <div className="space-y-3">
+                                                        {meusGastos.map(gasto => (
+                                                            <div key={gasto.id} className="border rounded-lg p-4 flex justify-between items-center">
+                                                                <div>
+                                                                    <h4 className="font-semibold">{gasto.descricao}</h4>
+                                                                    <p className="text-sm text-gray-500">
+                                                                        {gasto.categoria} • {new Date(gasto.data).toLocaleDateString('pt-BR')}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <p className="text-lg font-bold text-green-600">R$ {gasto.valor.toFixed(2)}</p>
+                                                                    <span className={`text-xs px-2 py-1 rounded-full ${
+                                                                        gasto.tipo === 'rateado' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                                                                    }`}>
+                                                                        {gasto.tipo}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {meusGastos.length === 0 && (
+                                                            <div className="text-center py-8 text-gray-500">
+                                                                <p>Nenhum gasto registrado ainda</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'relatorio' && (
+                                            <div>
+                                                <h3 className="font-semibold mb-4">Resumo dos Gastos</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="bg-blue-50 p-4 rounded-lg">
+                                                        <p className="text-sm text-gray-600">Total Gasto</p>
+                                                        <p className="text-xl font-bold text-blue-600">
+                                                            R$ {meusGastos.reduce((acc, g) => acc + g.valor, 0).toFixed(2)}
+                                                        </p>
+                                                    </div>
+                                                    <div className="bg-green-50 p-4 rounded-lg">
+                                                        <p className="text-sm text-gray-600">Gastos Rateados</p>
+                                                        <p className="text-xl font-bold text-green-600">
+                                                            R$ {meusGastos.filter(g => g.tipo === 'rateado').reduce((acc, g) => acc + g.valor, 0).toFixed(2)}
+                                                        </p>
+                                                    </div>
+                                                    <div className="bg-purple-50 p-4 rounded-lg">
+                                                        <p className="text-sm text-gray-600">Gastos Individuais</p>
+                                                        <p className="text-xl font-bold text-purple-600">
+                                                            R$ {meusGastos.filter(g => g.tipo === 'individual').reduce((acc, g) => acc + g.valor, 0).toFixed(2)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'feedback' && (
+                                            <div>
+                                                <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                                                    <h3 className="font-semibold mb-4">Enviar Feedback</h3>
+                                                    <div className="mb-4">
+                                                        <label className="block text-sm font-medium mb-2">Avaliação</label>
+                                                        <div className="flex space-x-1">
+                                                            {[1, 2, 3, 4, 5].map(star => (
+                                                                <button
+                                                                    key={star}
+                                                                    onClick={() => setNovoFeedback({ ...novoFeedback, avaliacao: star })}
+                                                                    className={`text-2xl ${
+                                                                        star <= novoFeedback.avaliacao ? 'text-yellow-400' : 'text-gray-300'
+                                                                    }`}
+                                                                >
+                                                                    ⭐
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="mb-4">
+                                                        <label className="block text-sm font-medium mb-2">Comentários</label>
+                                                        <textarea
+                                                            placeholder="Como foi sua experiência?"
+                                                            value={novoFeedback.comentario}
+                                                            onChange={(e) => setNovoFeedback({ ...novoFeedback, comentario: e.target.value })}
+                                                            className="w-full border rounded-lg px-3 py-2"
+                                                            rows={3}
+                                                        />
+                                                    </div>
+                                                    <div className="mb-4">
+                                                        <label className="block text-sm font-medium mb-2">Sugestões de Melhoria</label>
+                                                        <textarea
+                                                            placeholder="O que poderia ser melhorado?"
+                                                            value={novoFeedback.melhorias}
+                                                            onChange={(e) => setNovoFeedback({ ...novoFeedback, melhorias: e.target.value })}
+                                                            className="w-full border rounded-lg px-3 py-2"
+                                                            rows={2}
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        onClick={enviarFeedback}
+                                                        className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                                                    >
+                                                        Enviar Feedback
+                                                    </button>
+                                                </div>
+
+                                                <div>
+                                                    <h3 className="font-semibold mb-4">Meus Feedbacks</h3>
+                                                    {feedbacks.filter(f => f.usuarioId === usuario.id && f.eventoId === eventoAtual.id).map(feedback => (
+                                                        <div key={feedback.id} className="border rounded-lg p-4 mb-3">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <div className="flex">
+                                                                    {[1, 2, 3, 4, 5].map(star => (
+                                                                        <span key={star} className={`text-sm ${
+                                                                            star <= feedback.avaliacao ? 'text-yellow-400' : 'text-gray-300'
+                                                                        }`}>⭐</span>
+                                                                    ))}
+                                                                </div>
+                                                                <span className="text-sm text-gray-500">
+                                                                    {new Date(feedback.data).toLocaleDateString('pt-BR')}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-gray-700">{feedback.comentario}</p>
+                                                            {feedback.melhorias && (
+                                                                <p className="text-sm text-gray-600 mt-2">
+                                                                    <strong>Melhorias:</strong> {feedback.melhorias}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(React.createElement(SistemaEventos), document.getElementById('root'));
+    </script>
+</body>
+</html>
