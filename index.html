@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão de Eventos</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const {
+            Plus, Users, DollarSign, FileText, Eye, EyeOff, Trash2, Edit2, 
+            Check, X, Calendar, MapPin, Clock, Star, MessageSquare, 
+            Key, UserPlus, LogIn, LogOut, Home, Settings, BarChart3,
+            Mail, Phone, CreditCard, Bed, Coffee, Car
+        } = lucide;
+
+        const SistemaEventos = () => {
+            const [usuario, setUsuario] = useState(null);
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [tela, setTela] = useState('login');
+            const [eventos, setEventos] = useState([]);
+            const [eventoAtual, setEventoAtual] = useState(null);
+            const [familias, setFamilias] = useState([]);
+            const [gastos, setGastos] = useState([]);
+            const [convites, setConvites] = useState([]);
+            const [feedbacks, setFeedbacks] = useState([]);
+            const [activeTab, setActiveTab] = useState('evento');
+
+            // Estados para formulários
+            const [formLogin, setFormLogin] = useState({ email: '', senha: '' });
+            const [formCadastro, setFormCadastro] = useState({ 
+                codigoConvite: '', nome: '', email: '', telefone: '', senha: '', confirmarSenha: ''
+            });
+            const [novoEvento, setNovoEvento] = useState({
+                nome: '', data: '', dataFim: '', descricao: '', 
+                local: '', endereco: '', capacidade: '',
+                valorAluguel: '', taxas: '', checkin: '', checkout: '',
+                comodidades: []
+            });
+            const [novoConvite, setNovoConvite] = useState({ nomeFamilia: '', email: '', telefone: '' });
+            const [novoFeedback, setNovoFeedback] = useState({ 
+                avaliacao: 5, comentario: '', melhorias: '', recomendacoes: ''
+            });
+            const [novoGasto, setNovoGasto] = useState({ 
+                descricao: '', valor: '', categoria: 'alimentacao', tipo: 'rateado'
+            });
+
+            // Comodidades disponíveis
+            const comodidadesDisponiveis = [
+                'Wi-Fi', 'Piscina', 'Churrasqueira', 'Ar Condicionado', 'TV', 
+                'Cozinha Completa', 'Estacionamento', 'Área Gourmet', 'Jardim',
+                'Academia', 'Sauna', 'Jogos', 'Som Ambiente'
+            ];
+
+            const categoriasGasto = [
+                { id: 'alimentacao', nome: 'Alimentação', icon: Coffee },
+                { id: 'transporte', nome: 'Transporte', icon: Car },
+                { id: 'hospedagem', nome: 'Hospedagem', icon: Bed },
+                { id: 'atividades', nome: 'Atividades', icon: Star },
+                { id: 'outros', nome: 'Outros', icon: CreditCard }
+            ];
+
+            // Carregar dados do localStorage
+            useEffect(() => {
+                const usuarioStorage = localStorage.getItem('usuario');
+                const eventosStorage = localStorage.getItem('eventos');
+                const familiasStorage = localStorage.getItem('familias');
+                const gastosStorage = localStorage.getItem('gastos');
+                const convitesStorage = localStorage.getItem('convites');
+                const feedbacksStorage = localStorage.getItem('feedbacks');
+                
+                if (usuarioStorage) {
+                    const user = JSON.parse(usuarioStorage);
+                    setUsuario(user);
+                    setIsAdmin(user.isAdmin || false);
+                    setTela('dashboard');
+                }
+                if (eventosStorage) setEventos(JSON.parse(eventosStorage));
+                if (familiasStorage) setFamilias(JSON.parse(familiasStorage));
+                if (gastosStorage) setGastos(JSON.parse(gastosStorage));
+                if (convitesStorage) setConvites(JSON.parse(convitesStorage));
+                if (feedbacksStorage) setFeedbacks(JSON.parse(feedbacksStorage));
+
+                // Criar admin padrão se não existir
+                const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                if (usuarios.length === 0) {
+                    const admin = {
+                        id: 'admin',
+                        nome: 'Administrador',
+                        email: 'admin@eventos.com',
+                        senha: 'admin123',
+                        isAdmin: true,
+                        criadoEm: new Date().toISOString()
+                    };
+                    localStorage.setItem('usuarios', JSON.stringify([admin]));
+                }
+            }, []);
+
+            // Salvar dados no localStorage
+            useEffect(() => {
+                if (eventos.length > 0) localStorage.setItem('eventos', JSON.stringify(eventos));
+            }, [eventos]);
+
+            useEffect(() => {
+                if (familias.length > 0) localStorage.setItem('familias', JSON.stringify(familias));
+            }, [familias]);
+
+            useEffect(() => {
+                if (gastos.length > 0) localStorage.setItem('gastos', JSON.stringify(gastos));
+            }, [gastos]);
+
+            useEffect(() => {
+                if (convites.length > 0) localStorage.setItem('convites', JSON.stringify(convites));
+            }, [convites]);
+
+            useEffect(() => {
+                if (feedbacks.length > 0) localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+            }, [feedbacks]);
+
+            // Funções de autenticação
+            const fazerLogin = () => {
+                const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                const user = usuarios.find(u => u.email === formLogin.email && u.senha === formLogin.senha);
+                
+                if (user) {
+                    setUsuario(user);
+                    setIsAdmin(user.isAdmin || false);
+                    localStorage.setItem('usuario', JSON.stringify(user));
+                    setTela('dashboard');
+                    setFormLogin({ email: '', senha: '' });
+                } else {
+                    alert('Email ou senha incorretos!');
+                }
+            };
+
+            const criarConta = () => {
+                if (formCadastro.senha !== formCadastro.confirmarSenha) {
+                    alert('Senhas não coincidem!');
+                    return;
+                }
+
+                const convite = convites.find(c => c.codigo === formCadastro.codigoConvite && !c.usado);
+                if (!convite) {
+                    alert('Código de convite inválido ou já utilizado!');
+                    return;
+                }
+
+                const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                if (usuarios.find(u => u.email === formCadastro.email)) {
+                    alert('Email já cadastrado!');
+                    return;
+                }
+
+                const novoUsuario = {
+                    id: Date.now().toString(),
+                    nome: formCadastro.nome,
+                    email: formCadastro.email,
+                    telefone: formCadastro.telefone,
+                    senha: formCadastro.senha,
+                    isAdmin: false,
+                    familiaId: convite.id,
+                    criadoEm: new Date().toISOString()
+                };
+
+                usuarios.push(novoUsuario);
+                localStorage.setItem('usuarios', JSON.stringify(usuarios));
+
+                // Marcar convite como usado
+                const convitesAtualizados = convites.map(c => 
+                    c.id === convite.id ? { ...c, usado: true, usuarioId: novoUsuario.id } : c
+                );
+                setConvites(convitesAtualizados);
+
+                // Criar família automaticamente
+                const novaFamilia = {
+                    id: convite.id,
+                    nome: convite.nomeFamilia,
+                    responsavel: formCadastro.nome,
+                    email: formCadastro.email,
+                    telefone: formCadastro.telefone,
+                    membros: [],
+                    presente: false
+                };
+                setFamilias([...familias, novaFamilia]);
+
+                setUsuario(novoUsuario);
+                localStorage.setItem('usuario', JSON.stringify(novoUsuario));
+                setTela('dashboard');
+                setFormCadastro({ 
+                    codigoConvite: '', nome: '', email: '', telefone: '', senha: '', confirmarSenha: ''
+                });
+            };
+
+            const logout = () => {
+                setUsuario(null);
+                setIsAdmin(false);
+                localStorage.removeItem('usuario');
+                setTela('login');
+                setEventoAtual(null);
+            };
+
+            // Funções administrativas
+            const gerarConvite = () => {
+                if (!novoConvite.nomeFamilia || !novoConvite.email) return;
+
+                const convite = {
+                    id: Date.now(),
+                    codigo: Math.random().toString(36).substr(2, 8).toUpperCase(),
+                    nomeFamilia: novoConvite.nomeFamilia,
+                    email: novoConvite.email,
+                    telefone: novoConvite.telefone,
+                    usado: false,
+                    criadoEm: new Date().toISOString()
+                };
+
+                setConvites([...convites, convite]);
+                setNovoConvite({ nomeFamilia: '', email: '', telefone: '' });
+                alert(`Convite gerado! Código: ${convite.codigo}`);
+            };
+
+            const criarEvento = () => {
+                if (!novoEvento.nome || !novoEvento.data) return;
+                
+                const evento = {
+                    id: Date.now(),
+                    ...novoEvento,
+                    familias: [],
+                    gastos: [],
+                    criado: new Date().toISOString()
+                };
+                
+                setEventos([...eventos, evento]);
+                setNovoEvento({
+                    nome: '', data: '', dataFim: '', descricao: '', 
+                    local: '', endereco: '', capacidade: '',
+                    valorAluguel: '', taxas: '', checkin: '', checkout: '',
+                    comodidades: []
+                });
+            };
+
+            const adicionarGasto = () => {
+                if (!novoGasto.descricao || !novoGasto.valor) return;
+                
+                const gasto = {
+                    id: Date.now(),
+                    eventoId: eventoAtual.id,
+                    usuarioId: usuario.id,
+                    familiaId: usuario.familiaId || usuario.id,
+                    ...novoGasto,
+                    valor: parseFloat(novoGasto.valor),
+                    data: new Date().toISOString()
+                };
+                
+                setGastos([...gastos, gasto]);
+                setNovoGasto({ descricao: '', valor: '', categoria: 'alimentacao', tipo: 'rateado' });
+            };
+
+            const enviarFeedback = () => {
+                if (!novoFeedback.comentario) return;
+
+                const feedback = {
+                    id: Date.now(),
+                    eventoId: eventoAtual.id,
+                    usuarioId: usuario.id,
+                    nomeUsuario: usuario.nome,
+                    ...novoFeedback,
+                    data: new Date().toISOString()
+                };
+
+                setFeedbacks([...feedbacks, feedback]);
+                setNovoFeedback({ avaliacao: 5, comentario: '', melhorias: '', recomendacoes: '' });
+                alert('Feedback enviado com sucesso!');
+            };
+
+            // Cálculos
+            const calcularEstatisticas = () => {
+                if (!eventoAtual) return {};
+
+                const gastosEvento = gastos.filter(g => g.eventoId === eventoAtual.id);
+                const familiasEvento = familias.filter(f => eventoAtual.familias?.includes(f.id));
+                const totalGastos = gastosEvento.reduce((acc, g) => acc + g.valor, 0);
+                const feedbacksEvento = feedbacks.filter(f => f.eventoId === eventoAtual.id);
+                const mediaAvaliacao = feedbacksEvento.length > 0 
+                    ? feedbacksEvento.reduce((acc, f) => acc + f.avaliacao, 0) / feedbacksEvento.length 
+                    : 0;
+
+                return {
+                    totalGastos,
+                    totalFamilias: familiasEvento.length,
+                    totalPessoas: familiasEvento.reduce((acc, f) => acc + (f.membros?.length || 0) + 1, 0),
+                    mediaAvaliacao,
+                    totalFeedbacks: feedbacksEvento.length
+                };
+            };
+
+            const minhaFamilia = familias.find(f => f.id === usuario?.familiaId);
+            const meusGastos = gastos.filter(g => g.familiaId === usuario?.familiaId);
+            const stats = calcularEstatisticas();
+
+            // Tela de Login
+            if (tela === 'login') {
+                return React.createElement('div', { className: "min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4" },
+                    React.createElement('div', { className: "bg-white rounded-xl shadow-2xl p-8 w-full max-w-md" },
+                        React.createElement('div', { className: "text-center mb-8" },
+                            React.createElement('div', { className: "bg-blue-100 rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-4" },
+                                React.createElement(Calendar, { className: "text-blue-600", size: 32 })
+                            ),
+                            React.createElement('h1', { className: "text-2xl font-bold text-gray-800" }, 'Sistema de Eventos'),
+                            React.createElement('p', { className: "text-gray-600" }, 'Faça login para acessar')
+                        ),
+                        React.createElement('div', { className: "space-y-4" },
+                            React.createElement('input', {
+                                type: "email",
+                                placeholder: "Email",
+                                value: formLogin.email,
+                                onChange: (e) => setFormLogin({ ...formLogin, email: e.target.value }),
+                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            }),
+                            React.createElement('input', {
+                                type: "password",
+                                placeholder: "Senha",
+                                value: formLogin.senha,
+                                onChange: (e) => setFormLogin({ ...formLogin, senha: e.target.value }),
+                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500",
+                                onKeyPress: (e) => e.key === 'Enter' && fazerLogin()
+                            }),
+                            React.createElement('button', {
+                                onClick: fazerLogin,
+                                className: "w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold"
+                            }, 'Entrar')
+                        ),
+                        React.createElement('div', { className: "mt-6 text-center" },
+                            React.createElement('button', {
+                                onClick: () => setTela('cadastro'),
+                                className: "text-blue-500 hover:text-blue-700 font-semibold"
+                            }, 'Não tem conta? Cadastre-se com convite')
+                        ),
+                        React.createElement('div', { className: "mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600" },
+                            React.createElement('strong', null, 'Acesso Admin:'),
+                            React.createElement('br'),
+                            'Email: admin@eventos.com',
+                            React.createElement('br'),
+                            'Senha: admin123'
+                        )
+                    )
+                );
+            }
+
+            // Tela de Cadastro
+            if (tela === 'cadastro') {
+                return React.createElement('div', { className: "min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4" },
+                    React.createElement('div', { className: "bg-white rounded-xl shadow-2xl p-8 w-full max-w-md" },
+                        React.createElement('div', { className: "text-center mb-8" },
+                            React.createElement('div', { className: "bg-green-100 rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-4" },
+                                React.createElement(UserPlus, { className: "text-green-600", size: 32 })
+                            ),
+                            React.createElement('h1', { className: "text-2xl font-bold text-gray-800" }, 'Criar Conta'),
+                            React.createElement('p', { className: "text-gray-600" }, 'Use seu código de convite')
+                        ),
+                        React.createElement('div', { className: "space-y-4" },
+                            React.createElement('input', {
+                                type: "text",
+                                placeholder: "Código do Convite",
+                                value: formCadastro.codigoConvite,
+                                onChange: (e) => setFormCadastro({ ...formCadastro, codigoConvite: e.target.value.toUpperCase() }),
+                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            }),
+                            React.createElement('input', {
+                                type: "text",
+                                placeholder: "Nome Completo",
+                                value: formCadastro.nome,
+                                onChange: (e) => setFormCadastro({ ...formCadastro, nome: e.target.value }),
+                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            }),
+                            React.createElement('input', {
+                                type: "email",
+                                placeholder: "Email",
+                                value: formCadastro.email,
+                                onChange: (e) => setFormCadastro({ ...formCadastro, email: e.target.value }),
+                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            }),
+                            React.createElement('input', {
+                                type: "tel",
+                                placeholder: "Telefone",
+                                value: formCadastro.telefone,
+                                onChange: (e) => setFormCadastro({ ...formCadastro, telefone: e.target.value }),
+                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            }),
+                            React.createElement('input', {
+                                type: "password",
+                                placeholder: "Senha",
+                                value: formCadastro.senha,
+                                onChange: (e) => setFormCadastro({ ...formCadastro, senha: e.target.value }),
+                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            }),
+                            React.createElement('input', {
+                                type: "password",
+                                placeholder: "Confirmar Senha",
+                                value: formCadastro.confirmarSenha,
+                                onChange: (e) => setFormCadastro({ ...formCadastro, confirmarSenha: e.target.value }),
+                                className: "w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            }),
+                            React.createElement('button', {
+                                onClick: criarConta,
+                                className: "w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 font-semibold"
+                            }, 'Criar Conta')
+                        ),
+                        React.createElement('div', { className: "mt-6 text-center" },
+                            React.createElement('button', {
+                                onClick: () => setTela('login'),
+                                className: "text-blue-500 hover:text-blue-700 font-semibold"
+                            }, 'Já tem conta? Fazer login')
+                        )
+                    )
+                );
+            }
+
+            // Dashboard - versão simplificada para o exemplo
+            return React.createElement('div', { className: "min-h-screen bg-gray-50 p-4" },
+                React.createElement('div', { className: "max-w-4xl mx-auto" },
+                    React.createElement('div', { className: "bg-white rounded-lg shadow p-6 mb-6" },
+                        React.createElement('div', { className: "flex justify-between items-center" },
+                            React.createElement('h1', { className: "text-2xl font-bold" }, 'Sistema de Eventos'),
+                            React.createElement('button', {
+                                onClick: logout,
+                                className: "text-red-500 hover:text-red-700"
+                            }, 'Sair')
+                        ),
+                        React.createElement('p', { className: "text-gray-600 mt-2" }, 
+                            `Bem-vindo, ${usuario.nome}! ${isAdmin ? '(Administrador)' : ''}`
+                        )
+                    ),
+                    React.createElement('div', { className: "text-center py-12" },
+                        React.createElement('h2', { className: "text-xl mb-4" }, 'Sistema funcionando perfeitamente! 🎉'),
+                        React.createElement('p', { className: "text-gray-600" }, 
+                            isAdmin 
+                                ? 'Como admin, você pode criar eventos e gerar convites.' 
+                                : 'Como participante, você pode adicionar gastos e dar feedback.'
+                        )
+                    )
+                )
+            );
+        };
+
+        ReactDOM.render(React.createElement(SistemaEventos), document.getElementById('root'));
+    </script>
+</body>
+</html>
